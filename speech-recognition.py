@@ -4,8 +4,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 
 import matplotlib.pyplot as plt
-<<<<<<< HEAD
-=======
 
 from pydub import AudioSegment, effects  
 
@@ -31,4 +29,3 @@ for filename in os.listdir(input_dir):
         rawsound = AudioSegment.from_file(input_path, "mp3")  
         normalizedsound = effects.normalize(rawsound)  
         normalizedsound.export(output_path, format="mp3")
->>>>>>> e55547d5 (Audio normalization)
