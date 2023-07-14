@@ -6,6 +6,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 
 import os
+import time
 
 ########## AUDIO PROCESSING ##########
 
@@ -15,6 +16,21 @@ import noisereduce as nr
 import soundfile as sf
 
 import librosa.display
+
+# assign directory
+input_dir = "./dataset/recordings/recordings/"
+reduced_noise_dir = "./dataset/red_noise_recordings/"
+output_dir = "./dataset/treated_recordings/"
+
+def get_status():
+    in_count = 0
+    out_count = 0
+    for file in os.listdir(input_dir):
+        in_count = in_count + 1
+    for file in os.listdir(output_dir):
+        out_count = out_count + 1
+    return (in_count, out_count)
+
 
 def print_waveforms(audio1, audio2, audio3, sr, same_graph=False):
     if same_graph:
@@ -64,17 +80,20 @@ def print_waveforms(audio1, audio2, audio3, sr, same_graph=False):
         plt.show()
 
 def pre_process_audio(debug=False):
-    # assign directory
-    input_dir = "./dataset/recordings/recordings/"
-    reduced_noise_dir = "./dataset/red_noise_recordings/"
-    output_dir = "./dataset/treated_recordings/"
+    start_time = time.time()
 
     for filename in os.listdir(input_dir):
+        count = 0
+        (total, out_count) = get_status()
         input_path = os.path.join(input_dir, filename)
         # checking if it is a file
         if os.path.isfile(input_path):
             # get file name
             file_name = (input_path.split("/"))[4]
+            
+            if debug:
+                count = count + 1
+                print(f"Pre-processing file {count} of {total} (File Name: {file_name}))")
 
             # setup export paths
             reduced_noise_path = reduced_noise_dir + file_name
@@ -105,6 +124,10 @@ def pre_process_audio(debug=False):
             if file_name == "kikongo1.mp3":
                 audio_normalized, sr2 = librosa.load(output_path, sr=None)
                 print_waveforms(audio1=audio, audio2=reduced_noise, audio3=audio_normalized, sr=sr)
-        break
 
-pre_process_audio(debug=True)
+    # calculate the elapsed time
+    result = (time.time() - start_time)
+    return result
+
+total, successful = get_status()
+print(f"{successful}/{total} of audio files were pre-processed successfully")
