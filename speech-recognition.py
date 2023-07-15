@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 import os
 import time
+import csv
 
 ########## AUDIO PROCESSING ##########
 
@@ -22,15 +23,49 @@ input_dir = "./dataset/recordings/recordings/"
 reduced_noise_dir = "./dataset/red_noise_recordings/"
 output_dir = "./dataset/treated_recordings/"
 
+def get_native_languages():
+    language_set = set()
+    # open the input CSV file
+    input_file = './dataset/speakers_all_treated.csv'
+    with open(input_file, 'r') as file:
+        reader = csv.reader(file)
+
+        # iterate row by row in the input CSV file
+        for row in reader:
+            # extract language from row
+            if str(row[4]) not in language_set:
+                language_set.add(str(row[4]))
+
+    return list(language_set)
+
+def create_new_csv(file_list):
+    # open the input CSV file
+    input_file = './dataset/speakers_all.csv'
+    with open(input_file, 'r') as file:
+        reader = csv.reader(file)
+
+        # create a new CSV file for the desired rows
+        output_file = './dataset/speakers_all_treated.csv'
+        with open(output_file, 'w', newline='') as output:
+            writer = csv.writer(output)
+
+            # iterate row by row in the input CSV file
+            for row in reader:
+                # copy rows that meet the desired conditions
+                if str(row[3]) in file_list :
+                    writer.writerow(row)
+    
 def get_status():
     in_count = 0
     out_count = 0
-    for file in os.listdir(input_dir):
+    file_list = []
+    for filename in os.listdir(input_dir):
         in_count = in_count + 1
-    for file in os.listdir(output_dir):
+    for filename in os.listdir(output_dir):
         out_count = out_count + 1
-    return (in_count, out_count)
-
+        filename = filename.replace(".mp3", "")
+        file_list.append(filename)
+    return (in_count, out_count, file_list)
 
 def print_waveforms(audio1, audio2, audio3, sr, same_graph=False):
     if same_graph:
@@ -129,5 +164,10 @@ def pre_process_audio(debug=False):
     result = (time.time() - start_time)
     return result
 
-total, successful = get_status()
+file_list = []
+total, successful, file_list = get_status()
 print(f"{successful}/{total} of audio files were pre-processed successfully")
+#create_new_csv(file_list)
+language_list = get_native_languages()
+for item in language_list:
+    print(item)
