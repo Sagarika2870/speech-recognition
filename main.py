@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import primary_model as pm
 
+
 if __name__ == "__main__":
     # Load dataset paths and transcriptions
     audio_paths = ["path/to/audio1.wav", "path/to/audio2.wav"]
