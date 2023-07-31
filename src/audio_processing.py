@@ -23,6 +23,16 @@ input_dir = "./dataset/recordings/recordings/"
 reduced_noise_dir = "./dataset/red_noise_recordings/"
 output_dir = "./dataset/treated_recordings/"
 
+def get_audiopath_list(input_dir):
+    audiopath_list = []
+    for filename in os.listdir(input_dir):
+        input_path = os.path.join(input_dir, filename)
+        # checking if it is a file
+        if os.path.isfile(input_path):
+            # get file name
+            audiopath_list.append(input_path)
+    return audiopath_list
+
 def get_native_languages():
     language_set = set()
     # open the input CSV file
@@ -164,10 +174,11 @@ def pre_process_audio(debug=False):
     result = (time.time() - start_time)
     return result
 
-file_list = []
-total, successful, file_list = get_status()
-print(f"{successful}/{total} of audio files were pre-processed successfully")
-#create_new_csv(file_list)
-language_list = get_native_languages()
-for item in language_list:
-    print(item)
+if __name__ == "__main__":
+    file_list = []
+    total, successful, file_list = get_status()
+    print(f"{successful}/{total} of audio files were pre-processed successfully")
+    #create_new_csv(file_list)
+    language_list = get_native_languages()
+    for item in language_list:
+        print(item)

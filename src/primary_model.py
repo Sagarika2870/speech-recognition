@@ -2,7 +2,7 @@ import torch
 import torchaudio
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
 
 
 # Our speech-to-text model
@@ -18,7 +18,7 @@ class SpeechToTextModel(nn.Module):
         return output
 
 # Create our custom dataset for loading audio and transcriptions
-class CustomDataset(Dataset):
+class AccentDataset(Dataset):
     def __init__(self, audio_paths, transcriptions):
         self.audio_paths = audio_paths
         self.transcriptions = transcriptions
@@ -29,7 +29,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx):
         audio_path = self.audio_paths[idx]
         waveform, sample_rate = torchaudio.load(audio_path)
-        transcription = self.transcriptions[idx]
+        transcription = self.transcriptions
         return waveform, transcription
 
 # Training function
