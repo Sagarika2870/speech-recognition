@@ -7,7 +7,6 @@ import primary_model as pm
 import audio_processing as ap
 
 
-
 if __name__ == "__main__":
     # Load dataset paths and transcriptions
     input_dir = "./dataset/treated_recordings/"
@@ -29,7 +28,6 @@ if __name__ == "__main__":
 
     # Initialize training dataset and dataloader
     dataset = pm.AccentDataset(audio_paths, transcriptions)
-    print(dataset)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # Loss function, optimizer, and device

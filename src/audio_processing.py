@@ -126,49 +126,55 @@ def print_waveforms(audio1, audio2, audio3, sr, same_graph=False):
 
 def pre_process_audio(debug=False):
     start_time = time.time()
+    count = 0
 
     for filename in os.listdir(input_dir):
-        count = 0
-        (total, out_count) = get_status()
-        input_path = os.path.join(input_dir, filename)
-        # checking if it is a file
-        if os.path.isfile(input_path):
-            # get file name
-            file_name = (input_path.split("/"))[4]
-            
+        try:
+            (total, out_count, file_list) = get_status()
+            input_path = os.path.join(input_dir, filename)
+            # checking if it is a file
+            if os.path.isfile(input_path):
+                # get file name
+                file_name = (input_path.split("/"))[4]
+                
+                if debug:
+                    count = count + 1
+                    print(f"Pre-processing file {count} of {total} (File Name: {file_name}))")
+
+                # setup export paths
+                reduced_noise_path = reduced_noise_dir + file_name
+                output_path = output_dir + file_name
+                output_path = output_path.replace(".mp3", ".wav")
+
+                # load audio file
+                audio, sr = librosa.load(input_path, sr=None)
+
+                if debug:
+                    print("Sampling rate: " + str(sr))
+                    print("Duration: " + str(librosa.get_duration(y=audio, sr=sr)))
+
+                # noise reduction
+                reduced_noise = nr.reduce_noise(y=audio, sr=sr)
+
+                # export audio file, import into audio segment and delete it
+                sf.write(reduced_noise_path, reduced_noise, sr)
+                audio_segment = AudioSegment.from_mp3(reduced_noise_path)
+                os.remove(reduced_noise_path)
+
+                # normalize the audio segment
+                normalizedsound = effects.normalize(audio_segment)
+
+                # save audio segment
+                normalizedsound.export(output_path, format="wav")
+
+                # plot before and after waveforms for the kikongo1.wav file
+                #if file_name == "kikongo1.wav":
+                #   audio_normalized, sr2 = librosa.load(output_path, sr=None)
+                #   print_waveforms(audio1=audio, audio2=reduced_noise, audio3=audio_normalized, sr=sr)
+        except Exception as e:
             if debug:
-                count = count + 1
-                print(f"Pre-processing file {count} of {total} (File Name: {file_name}))")
-
-            # setup export paths
-            reduced_noise_path = reduced_noise_dir + file_name
-            output_path = output_dir + file_name
-
-            # load audio file
-            audio, sr = librosa.load(input_path, sr=None)
-
-            if debug:
-                print("Sampling rate: " + str(sr))
-                print("Duration: " + str(librosa.get_duration(y=audio, sr=sr)))
-
-            # noise reduction
-            reduced_noise = nr.reduce_noise(y=audio, sr=sr)
-
-            # export audio file, import into audio segment and delete it
-            sf.write(reduced_noise_path, reduced_noise, sr)
-            audio_segment = AudioSegment.from_mp3(reduced_noise_path)
-            os.remove(reduced_noise_path)
-
-            # normalize the audio segment
-            normalizedsound = effects.normalize(audio_segment)
-
-            # save audio segment
-            normalizedsound.export(output_path, format="mp3")
-
-            # plot before and after waveforms for the kikongo1.mp3 file
-            if file_name == "kikongo1.mp3":
-                audio_normalized, sr2 = librosa.load(output_path, sr=None)
-                print_waveforms(audio1=audio, audio2=reduced_noise, audio3=audio_normalized, sr=sr)
+                print(f"Error occurred for {file_name}: {e}")
+                continue  # continue to the next iteration of the loop
 
     # calculate the elapsed time
     result = (time.time() - start_time)
@@ -176,9 +182,8 @@ def pre_process_audio(debug=False):
 
 if __name__ == "__main__":
     file_list = []
+    pre_process_audio(debug=True)
     total, successful, file_list = get_status()
     print(f"{successful}/{total} of audio files were pre-processed successfully")
-    #create_new_csv(file_list)
+    create_new_csv(file_list)
     language_list = get_native_languages()
-    for item in language_list:
-        print(item)
