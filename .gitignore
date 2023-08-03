@@ -1,3 +1,5 @@
 env/
 dataset/speakers_all_treated.xlsx
 dataset/~$speakers_all_treated.xlsx
+dataset/recordings
+dataset/treated_recordings
