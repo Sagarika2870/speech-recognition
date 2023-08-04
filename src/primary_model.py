@@ -36,7 +36,7 @@ class AccentDataset(Dataset):
         self.audio_paths = audio_paths
         self.transcriptions = transcriptions
         self.vocab = defaultdict(lambda: len(self.vocab))
-        self.transforms = transforms.MFCC(melkwargs={"n_mels": 10, "center": False},
+        self.transforms = transforms.MFCC(melkwargs={"n_mels": 10, "center": False, "n_fft": 8000},
                                           sample_rate=44100, n_mfcc=10, log_mels=True)  # Using MFCC transformation from torchaudio
         # Load the pre-trained GloVe embeddings
         self.glove = torchtext.vocab.GloVe(name='6B', dim=50)
@@ -79,24 +79,30 @@ def tensor_to_words():
 
 def get_accuracy(model, device, dataloader):
     model.eval() # set model to evaluation mode
-    correct = 0
-    total = 0
+    total_correct  = 0
+    total_samples = 0
+    glove = torchtext.vocab.GloVe(name='6B', dim=50)
 
     with torch.no_grad():
-        for  audio, labels, sequence_len, label_len in dataloader:
-            audio, labels = audio.to(device), labels.to(device)
-            output = model(audio)
-            output = output.permute(1, 0, 2)
+        for mfcc_feat, labels, _, _ in dataloader:
+            mfcc_feat, labels = mfcc_feat.to(device), labels.to(device)
+            pred = model(mfcc_feat)
 
-            print(output.shape)
+            print(pred.shape)
+            print(pred)
+            
+            # Convert predicted embeddings to words for each time step
+            predicted_words = []
+            for t in range(pred.size(1)):
+                predicted_indices = torch.argmax(pred[:, t, :], dim=1)
+                predicted_words.extend([glove.itos[idx] for idx in predicted_indices])
 
-            # convert logits to predicted labels
-            _, predicted = torch.max(output, 2)
-            print(f"Shape pred 1: {predicted.shape}")
-            predicted = predicted.transpose(1, 0)  # (T, N) -> (N, T)
-            print(f"Shape pred 2: {predicted.shape}")
+            # Sum the predicted words to get the final transcript
+            sum_predicted_transcript = " ".join(predicted_words)
+
+            print(sum_predicted_transcript)
     
-    accuracy = correct / total
+    accuracy = total_correct / total_samples
     return accuracy
 
 # plotting

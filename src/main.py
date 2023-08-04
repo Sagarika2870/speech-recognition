@@ -6,7 +6,6 @@ from torch.utils.data import DataLoader
 import primary_model as pm
 import audio_processing as ap
 
-from collections import defaultdict
 from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
@@ -25,7 +24,7 @@ if __name__ == "__main__":
     input_dim = 10  # MFCC feature dimension
     hidden_dim = 256
     output_dim = len(audio_paths)  # Number of unique audio files
-    batch_size = 10
+    batch_size = 12
 
     # Create the model
     model = pm.SpeechToTextModel(input_dim, hidden_dim, output_dim)
@@ -50,6 +49,7 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=pm.custom_collate_fn)
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True, collate_fn=pm.custom_collate_fn)
 
+    # Train the model
     pm.train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5, learning_rate=0.001, debug=True)
     #get_accuracy(model, test_loader)
 
