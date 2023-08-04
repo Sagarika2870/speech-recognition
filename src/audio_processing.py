@@ -150,6 +150,8 @@ def pre_process_audio(debug=False):
                 audio, sr = librosa.load(input_path, sr=None)
 
                 if (sr != 44100):
+                    if debug:
+                        print("Skipping file with sampling rate: " + str(sr))
                     continue
 
                 if debug:
@@ -185,7 +187,7 @@ def pre_process_audio(debug=False):
 
 if __name__ == "__main__":
     file_list = []
-    pre_process_audio(debug=True)
+    #pre_process_audio(debug=True)
     total, successful, file_list = get_status()
     print(f"{successful}/{total} of audio files were pre-processed successfully")
     create_new_csv(file_list)
