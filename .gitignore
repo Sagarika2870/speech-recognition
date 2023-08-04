@@ -2,3 +2,5 @@ env/
 dataset/speakers_all_treated.xlsx
 dataset/~$speakers_all_treated.xlsx
 dataset/original_recordings
+.vector_cache/
+src\__pycache__/

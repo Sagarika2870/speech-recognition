@@ -1,5 +1,6 @@
 import torch
 import torchaudio
+import torchtext
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset
@@ -35,6 +36,8 @@ class AccentDataset(Dataset):
         self.vocab = defaultdict(lambda: len(self.vocab))
         self.transforms = transforms.MFCC(melkwargs={"n_mels": 10, "center": False},
                                           sample_rate=44100, n_mfcc=10, log_mels=True)  # Using MFCC transformation from torchaudio
+        # Load the pre-trained GloVe embeddings
+        self.glove = torchtext.vocab.GloVe(name='6B', dim=50)
 
     def __len__(self):
         return len(self.audio_paths)
@@ -42,8 +45,12 @@ class AccentDataset(Dataset):
     def __getitem__(self, idx):
         audio_path = self.audio_paths[idx]
         waveform, sample_rate = torchaudio.load(audio_path)
+
+        # convert transcript into GloVe embeddings
+        embeddings = sum(self.glove[word] for word in split_transcript(self.transcriptions))
+        numerical_transcription_tensor = torch.tensor(embeddings)
         
-        # tokenization of transcription
+        # old tokenization of transcription
         numerical_transcription = [self.vocab[token] for token in self.transcriptions.split()]
         numerical_transcription_tensor = torch.tensor(numerical_transcription, dtype=torch.long)
         
@@ -55,6 +62,19 @@ class AccentDataset(Dataset):
         mfcc_features = mfcc_features.transpose(0, 1)
 
         return mfcc_features, numerical_transcription_tensor
+    
+def split_transcript(text):
+    text = text.replace(".", " . ") \
+                .replace(",", " , ") \
+                .replace("?", " ? ") \
+                .replace("!", " ! ") \
+                .replace(";", " ; ") \
+                .replace(":", " : ") \
+                .replace("-", " - ")
+    return text.lower().split()
+
+def tensor_to_words():
+    return
 
 def get_accuracy(model, device, dataloader):
     model.eval() # set model to evaluation mode
@@ -71,7 +91,9 @@ def get_accuracy(model, device, dataloader):
 
             # convert logits to predicted labels
             _, predicted = torch.max(output, 2)
+            print(f"Shape pred 1: {predicted.shape}")
             predicted = predicted.transpose(1, 0)  # (T, N) -> (N, T)
+            print(f"Shape pred 2: {predicted.shape}")
     
     accuracy = correct / total
     return accuracy
