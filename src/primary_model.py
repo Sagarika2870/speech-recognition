@@ -17,6 +17,8 @@ import attention
 class SpeechToTextModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(SpeechToTextModel, self).__init__()
+        self.encoder = encoder.Encoder(input_dim, hidden_dim, num_layers=4)
+        self.decoder = decoder.Decoder(input_dim,hidden_dim,output_dim,num_layers=1)
         self.rnn = nn.LSTM(input_dim, hidden_dim, bidirectional=True, batch_first=True)
         self.fc = nn.Linear(hidden_dim * 2, output_dim)
 
