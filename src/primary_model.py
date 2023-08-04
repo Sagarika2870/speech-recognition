@@ -56,15 +56,19 @@ class AccentDataset(Dataset):
 
         return mfcc_features, numerical_transcription_tensor
 
-def get_accuracy(model, dataloader):
-    correct, total = 0, 0
-    print("dataloder", list(dataloader)[0])
-    for  audio, labels, sequence_len, label_len in dataloader:
-        output = model(audio)
-        pred = output.max(1, keepdim=True)[1]
-        correct += pred.eq(labels.view_as(pred)).sum().item()
-        total += labels.shape[0]
-    return correct / total
+def get_accuracy(model, device, dataloader):
+    with torch.no_grad():
+        for  audio, labels, sequence_len, label_len in dataloader:
+            audio, labels = audio.to(device), labels.to(device)
+            output = model(audio)
+            output = output.permute(1, 0, 2)
+
+            print(output.shape)
+
+            # convert logits to predicted labels
+            _, predicted = torch.max(output, 2)
+            predicted = predicted.transpose(1, 0)  # (T, N) -> (N, T)
+    return
 
 # plotting
 def plot(losses, epochs, train_acc, valid_acc):
@@ -104,7 +108,6 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
             audio, label = audio.to(device), label.to(device)
             optimizer.zero_grad()
             outputs = model(audio)
-            print(outputs.shape)
             outputs = outputs.permute(1, 0, 2)
             loss = criterion(outputs, label, sequence_len, label_len)
             loss.backward()
@@ -119,7 +122,7 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
-        if(epoch +1 ) % 2 == 0:
+        if(epoch + 1) % 2 == 0:
             torch.save(model.state_dict(), f"model_epoch{epoch +1}")
     plot(losses, epochs, train_acc, valid_acc)
     return
