@@ -11,7 +11,8 @@ from sklearn.model_selection import train_test_split
 
 if __name__ == "__main__":
     # Load dataset paths and transcriptions
-    input_dir = "./dataset/treated_recordings/"
+    #input_dir = "./dataset/treated_recordings/"
+    input_dir = "./dataset/testing/"
 
     audio_paths = ap.get_audiopath_list(input_dir)
     len_list = len(audio_paths)
