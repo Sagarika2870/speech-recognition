@@ -8,6 +8,9 @@ from collections import defaultdict
 import matplotlib.pyplot as plt
 
 import torch.nn.functional as F
+import encoder 
+import decoder 
+import attention
 
 # Our speech-to-text model
 class SpeechToTextModel(nn.Module):
@@ -55,7 +58,8 @@ class AccentDataset(Dataset):
 
 def get_accuracy(model, dataloader):
     correct, total = 0, 0
-    for audio, labels in dataloader:
+    print("dataloder", list(dataloader)[0])
+    for  audio, labels, sequence_len, label_len in dataloader:
         output = model(audio)
         pred = output.max(1, keepdim=True)[1]
         correct += pred.eq(labels.view_as(pred)).sum().item()
@@ -79,7 +83,7 @@ def plot(losses, epochs, train_acc, valid_acc):
     plt.show()
 
 # Training function
-def train(model, dataloader, batch_size, num_epochs=5, learning_rate=0.001, debug=False):
+def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5, learning_rate=0.001, debug=False):
     criterion = nn.CTCLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     losses, train_acc, valid_acc = [], [], []
@@ -91,7 +95,7 @@ def train(model, dataloader, batch_size, num_epochs=5, learning_rate=0.001, debu
     criterion.to(device)
 
     for epoch in range(num_epochs):
-        for audio, label, sequence_len, label_len in dataloader:
+        for audio, label, sequence_len, label_len in train_loader:
             if debug:
                 print(f"Audio Shape: {audio.shape}")
                 print(f"Label Shape: {label.shape}")
@@ -108,11 +112,15 @@ def train(model, dataloader, batch_size, num_epochs=5, learning_rate=0.001, debu
         losses.append(float(loss))
 
         epochs.append(epoch)
+
+        #get accuracy is not working. Incorrect function?
         train_acc.append(get_accuracy(model, train_loader))
-        valid_acc.append(get_accuracy(model, valid_loader))
+        #valid_acc.append(get_accuracy(model, valid_loader))
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
+        if(epoch +1 ) % 2 == 0:
+            torch.save(model.state_dict(), f"model_epoch{epoch +1}")
     plot(losses, epochs, train_acc, valid_acc)
     return
 
