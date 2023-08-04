@@ -3,10 +3,14 @@ import torchaudio
 import torchtext
 import torch.nn as nn
 import torch.optim as optim
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 import torchaudio.transforms as transforms
 from collections import defaultdict
 import matplotlib.pyplot as plt
+from sklearn.metrics.pairwise import cosine_similarity
+import numpy as np
+import Levenshtein
 
 import torch.nn.functional as F
 import encoder 
@@ -102,9 +106,55 @@ def get_accuracy(model, device, dataloader):
 
             print(sum_predicted_transcript)
     
-    accuracy = total_correct / total_samples
-    return accuracy
+    #accuracy = total_correct / total_samples
+    return sum_predicted_transcript
 
+# def get_accuracy(outputs,vocab):
+#     decoded = []
+#     glove = torchtext.vocab.GloVe(name='6B', dim=50)
+#     glove_np = glove.vectors.numpy()
+#     glove_vectors = torch.tensor(glove_np)
+#     #out of vocab token
+#     oov_token = '<UNK>'
+#     if oov_token not in vocab:
+#         vocab.append(oov_token)
+#     oov_id = vocab.index(oov_token) 
+
+#     for batch_outputs in outputs:
+#         batch_outputs_flat = batch_outputs.view(-1, batch_outputs.size(-1))
+
+#         # batch_outputs_flat_normalized = F.normalize(batch_outputs_flat, dim=-1)
+#         # glove_vectors_normalized = F.normalize(glove_vectors, dim=-1)
+
+#         #expand glove_vectors for same number of dimentions
+#         #glove_vectors_normalized_expanded = glove_vectors_normalized.unsqueeze(0)
+#         print(f"batch Shape: {batch_outputs_flat.shape}")
+#         print(f"glove Shape: {glove_vectors.shape}")
+
+#         # sim_scores = F.cosine_similarity(batch_outputs_flat_normalized.unsqueeze(1),glove_vectors_normalized_expanded.unsqueeze(0), dim=-1)
+#         # sim_scores = sim_scores.view(batch_outputs.size(0), batch_outputs.size(1), -1)
+#         # best_word_indices = torch.argmax(sim_scores, dim=-1)
+
+#         # best_word_indices[best_word_indices >= len(vocab)] = oov_id
+
+#         # best_word_indices = best_word_indices.view(batch_outputs.size(0), batch_outputs.size(1))
+    
+#         # batch_decoded = [[vocab[i.item()] for i in timestep] for timestep in best_word_indices]
+#         # decoded.append(batch_decoded)
+
+#     return decoded
+
+def WER(decoded_output, transcription):
+    sum_percentage = 0
+    for sample in decoded_output:
+        for word in sample:
+            distance = Levenshtein.distance(transcription, word)
+            max_length = max(len(word), len(transcription))
+            sum_percentage += (1- distance /max_length)*100
+
+    return sum_percentage/len(transcription)
+    
+        
 # plotting
 def plot(losses, epochs, train_acc, valid_acc):
     plt.title("Training Curve")
@@ -122,11 +172,14 @@ def plot(losses, epochs, train_acc, valid_acc):
     plt.show()
 
 # Training function
-def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5, learning_rate=0.001, debug=False):
+def train(model, dataloader,train_loader, valid_loader, transcription, batch_size, num_epochs=5, learning_rate=0.001, debug=False):
     criterion = nn.CTCLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     losses, train_acc, valid_acc = [], [], []
     epochs = []
+    decoded = []
+    sample_accuracy = 0
+    vocab = transcription.split()
 
     # GPU support
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -143,22 +196,29 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
             audio, label = audio.to(device), label.to(device)
             optimizer.zero_grad()
             outputs = model(audio)
+
+            #calculate accuracy
+            print("here")
+            #sample_accuracy += WER(decoded,transcription)
             outputs = outputs.permute(1, 0, 2)
             loss = criterion(outputs, label, sequence_len, label_len)
             loss.backward()
             torch.cuda.empty_cache()  # Free up GPU memory
             optimizer.step()
 
+
         print("--- Epoch done ---")
         losses.append(float(loss))
 
         epochs.append(epoch)
-
+        decoded = get_accuracy(model, device, train_loader)
+        sample_accuracy += WER(decoded,transcription)
         #get accuracy is not working. Incorrect function?
-        train_acc.append(get_accuracy(model, device, train_loader))
-        valid_acc.append(get_accuracy(model, device, valid_loader))
-        print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
-              epoch+1, loss, train_acc[-1], valid_acc[-1]))
+        train_acc.append(sample_accuracy/len(train_loader))
+        print("Train_acc %f", train_acc)
+        #valid_acc.append(get_accuracy(model, device, valid_loader))
+        # print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
+        #       epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
         if(epoch + 1) % 2 == 0:
             torch.cuda.empty_cache()  # Free up GPU memory

@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 if __name__ == "__main__":
     # Load dataset paths and transcriptions
     #input_dir = "./dataset/treated_recordings/"
-    input_dir = "./dataset/testing/"
+    input_dir = "../dataset/testing/"
 
     audio_paths = ap.get_audiopath_list(input_dir)
     len_list = len(audio_paths)
@@ -19,6 +19,7 @@ if __name__ == "__main__":
     Six spoons of fresh snow peas, five thick slabs of blue cheese, and maybe a snack for her brother Bob.  
     We also need a small plastic snake and a big toy frog for the kids.  She can scoop these things into three red bags, 
     and we will go meet her Wednesday at the train station.'''
+
 
     # Hyperparameters
     input_dim = 10  # MFCC feature dimension
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     valid_loader = DataLoader(valid_dataset, batch_size=batch_size, shuffle=True, collate_fn=pm.custom_collate_fn)
 
     # Train the model
-    pm.train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5, learning_rate=0.001, debug=True)
+    pm.train(model, dataloader,train_loader, valid_loader, transcriptions, batch_size, num_epochs=5, learning_rate=0.001, debug=True)
     #get_accuracy(model, test_loader)
 
     # Save the trained model for inference
