@@ -101,6 +101,7 @@ def train(model, dataloader, batch_size, num_epochs=5, learning_rate=0.001, debu
             optimizer.zero_grad()
             outputs = model(audio)
             print(outputs.shape)
+            outputs = outputs.permute(1, 0, 2)
             loss = criterion(outputs, label, sequence_len, label_len)
             loss.backward()
             optimizer.step()
