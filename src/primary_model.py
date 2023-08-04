@@ -47,12 +47,11 @@ class AccentDataset(Dataset):
         waveform, sample_rate = torchaudio.load(audio_path)
 
         # convert transcript into GloVe embeddings
-        embeddings = sum(self.glove[word] for word in split_transcript(self.transcriptions))
-        numerical_transcription_tensor = torch.tensor(embeddings)
+        numerical_transcription_tensor = sum(self.glove[word] for word in split_transcript(self.transcriptions))
         
         # old tokenization of transcription
-        numerical_transcription = [self.vocab[token] for token in self.transcriptions.split()]
-        numerical_transcription_tensor = torch.tensor(numerical_transcription, dtype=torch.long)
+        #numerical_transcription = [self.vocab[token] for token in self.transcriptions.split()]
+        #numerical_transcription_tensor = torch.tensor(numerical_transcription, dtype=torch.long)
         
         # preprocess the audio data using MFCC transformation
         mfcc_features = self.transforms(waveform)
@@ -141,6 +140,8 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
             loss.backward()
             torch.cuda.empty_cache()  # Free up GPU memory
             optimizer.step()
+
+        print("--- Epoch done ---")
         losses.append(float(loss))
 
         epochs.append(epoch)
