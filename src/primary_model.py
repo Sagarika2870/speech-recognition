@@ -57,6 +57,9 @@ class AccentDataset(Dataset):
         return mfcc_features, numerical_transcription_tensor
 
 def get_accuracy(model, device, dataloader):
+    correct = 0
+    total = 0
+    
     with torch.no_grad():
         for  audio, labels, sequence_len, label_len in dataloader:
             audio, labels = audio.to(device), labels.to(device)
@@ -68,7 +71,9 @@ def get_accuracy(model, device, dataloader):
             # convert logits to predicted labels
             _, predicted = torch.max(output, 2)
             predicted = predicted.transpose(1, 0)  # (T, N) -> (N, T)
-    return
+    
+    accuracy = correct / total
+    return accuracy
 
 # plotting
 def plot(losses, epochs, train_acc, valid_acc):
@@ -118,8 +123,8 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
         epochs.append(epoch)
 
         #get accuracy is not working. Incorrect function?
-        train_acc.append(get_accuracy(model, train_loader))
-        #valid_acc.append(get_accuracy(model, valid_loader))
+        train_acc.append(get_accuracy(model, device, train_loader))
+        valid_acc.append(get_accuracy(model, device, valid_loader))
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
@@ -144,9 +149,6 @@ def custom_collate_fn(batch):
     max_wave_len = max(len(item) for item in waveforms)
     seq_lengths = tuple([max_wave_len for _ in waveforms])
     label_lengths = tuple([len(item) for item in transcriptions])
-
-    print(seq_lengths)
-    print(label_lengths)
 
     # pad the waveforms with zero to the maximum length in the batch
     padded_waveforms = torch.nn.utils.rnn.pad_sequence(
