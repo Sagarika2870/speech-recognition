@@ -19,7 +19,7 @@ import soundfile as sf
 import librosa.display
 
 # assign directory
-input_dir = "./dataset/recordings/recordings/"
+input_dir = "./dataset/original_recordings/"
 reduced_noise_dir = "./dataset/red_noise_recordings/"
 output_dir = "./dataset/treated_recordings/"
 
@@ -135,7 +135,7 @@ def pre_process_audio(debug=False):
             # checking if it is a file
             if os.path.isfile(input_path):
                 # get file name
-                file_name = (input_path.split("/"))[4]
+                file_name = (input_path.split("/"))[3]
                 
                 if debug:
                     count = count + 1
@@ -148,6 +148,9 @@ def pre_process_audio(debug=False):
 
                 # load audio file
                 audio, sr = librosa.load(input_path, sr=None)
+
+                if (sr != 44100):
+                    continue
 
                 if debug:
                     print("Sampling rate: " + str(sr))
@@ -173,7 +176,7 @@ def pre_process_audio(debug=False):
                 #   print_waveforms(audio1=audio, audio2=reduced_noise, audio3=audio_normalized, sr=sr)
         except Exception as e:
             if debug:
-                print(f"Error occurred for {file_name}: {e}")
+                print(f"Error occurred for {filename}: {e}")
                 continue  # continue to the next iteration of the loop
 
     # calculate the elapsed time
