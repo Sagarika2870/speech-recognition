@@ -57,9 +57,10 @@ class AccentDataset(Dataset):
         return mfcc_features, numerical_transcription_tensor
 
 def get_accuracy(model, device, dataloader):
+    model.eval() # set model to evaluation mode
     correct = 0
     total = 0
-    
+
     with torch.no_grad():
         for  audio, labels, sequence_len, label_len in dataloader:
             audio, labels = audio.to(device), labels.to(device)
