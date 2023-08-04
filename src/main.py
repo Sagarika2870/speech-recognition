@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import primary_model as pm
 import audio_processing as ap
 
+from collections import defaultdict
 
 if __name__ == "__main__":
     # Load dataset paths and transcriptions
@@ -18,7 +19,7 @@ if __name__ == "__main__":
     and we will go meet her Wednesday at the train station.'''
 
     # Hyperparameters
-    input_dim = 80  # MFCC or spectrogram feature dimension
+    input_dim = 10  # MFCC feature dimension
     hidden_dim = 256
     output_dim = len(audio_paths)  # Number of unique audio files
     batch_size = 16
@@ -28,22 +29,10 @@ if __name__ == "__main__":
 
     # Initialize training dataset and dataloader
     dataset = pm.AccentDataset(audio_paths, transcriptions)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, collate_fn=pm.custom_collate_fn)
 
-    # Loss function, optimizer, and device
-    criterion = nn.CTCLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Move the model and criterion to the device
-    model.to(device)
-    criterion.to(device)
-
-    # Training loop
-    num_epochs = 10
-    for epoch in range(num_epochs):
-        train_loss = pm.train(model, dataloader, criterion, optimizer, device)
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {train_loss:.4f}")
+    pm.train(model, dataloader, batch_size, num_epochs=5, learning_rate=0.001, debug=True)
+    #get_accuracy(model, test_loader)
 
     # Save the trained model for inference
     torch.save(model.state_dict(), "speech_to_text_model.pt")
