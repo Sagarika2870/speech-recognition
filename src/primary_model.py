@@ -111,6 +111,7 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
             outputs = outputs.permute(1, 0, 2)
             loss = criterion(outputs, label, sequence_len, label_len)
             loss.backward()
+            torch.cuda.empty_cache()  # Free up GPU memory
             optimizer.step()
         losses.append(float(loss))
 
@@ -123,6 +124,7 @@ def train(model, dataloader,train_loader, valid_loader, batch_size, num_epochs=5
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
         if(epoch + 1) % 2 == 0:
+            torch.cuda.empty_cache()  # Free up GPU memory
             torch.save(model.state_dict(), f"model_epoch{epoch +1}")
     plot(losses, epochs, train_acc, valid_acc)
     return

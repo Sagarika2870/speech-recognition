@@ -24,7 +24,7 @@ if __name__ == "__main__":
     input_dim = 10  # MFCC feature dimension
     hidden_dim = 256
     output_dim = len(audio_paths)  # Number of unique audio files
-    batch_size = 16
+    batch_size = 8
 
     # Create the model
     model = pm.SpeechToTextModel(input_dim, hidden_dim, output_dim)
