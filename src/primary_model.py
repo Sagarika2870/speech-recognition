@@ -95,11 +95,7 @@ def get_accuracy(model, device, dataloader):
             # Convert predicted embeddings to words for each time step
             predicted_words = []
             for sequence in range(pred.size(1)):
-                sequence_embeddings = pred[:, sequence, :]
-                expand_sequence = sequence_embeddings.unsqueeze(2)
-
-                sim_scores = F.cosine_similarity(expand_sequence,glove.vectors.unsqueeze(0), dim=-1)
-                predicted_indices = torch.argmax(sim_scores, dim=1)
+                predicted_indices = torch.argmax( pred[:, sequence, :], dim=1)
                 predicted_words.extend([glove.itos[idx] for idx in predicted_indices])
 
             # Sum the predicted words to get the final transcript
