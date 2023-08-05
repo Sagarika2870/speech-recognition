@@ -166,15 +166,16 @@ def train(model, dataloader,train_loader, valid_loader, transcription, batch_siz
 
         losses.append(float(loss))
         epochs.append(epoch)
-        decoded = get_accuracy(model, device, train_loader)
-        sample_accuracy = WER(decoded, transcription)
-        #get accuracy is not working. Incorrect function?
-        train_acc.append(sample_accuracy/len(train_loader))
-        #valid_acc.append(get_accuracy(model, device, valid_loader))
-        #print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
-        #       epoch+1, loss, train_acc[-1], valid_acc[-1]))
-        print("Epoch %d; Loss %f; Train Acc %f" % (
-               epoch+1, loss, train_acc[-1],))
+        train_decoded = get_accuracy(model, device, train_loader)
+        train_sample_accuracy = WER(train_decoded,transcription)
+        train_acc.append(train_sample_accuracy/len(train_loader))
+
+        valid_decoded = get_accuracy(model, device, valid_loader)
+        valid_sample_accuracy = WER(valid_decoded, transcription)
+        valid_acc.append(valid_sample_accuracy)
+        
+        print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
+              epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
         if(epoch + 1) % 2 == 0:
             torch.cuda.empty_cache()  # Free up GPU memory
