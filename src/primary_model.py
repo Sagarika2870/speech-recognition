@@ -82,9 +82,9 @@ def tensor_to_words():
     return
 
 def get_accuracy(model, device, dataloader):
-    model.eval() # set model to evaluation mode
-    total_correct  = 0
-    total_samples = 0
+    #model.eval() # set model to evaluation mode
+    total_correct  = 1
+    total_samples = 1
     glove = torchtext.vocab.GloVe(name='6B', dim=50)
 
     with torch.no_grad():
@@ -92,57 +92,17 @@ def get_accuracy(model, device, dataloader):
             mfcc_feat, labels = mfcc_feat.to(device), labels.to(device)
             pred = model(mfcc_feat)
 
-            print(pred.shape)
-            print(pred)
-            
             # Convert predicted embeddings to words for each time step
             predicted_words = []
-            for t in range(pred.size(1)):
-                predicted_indices = torch.argmax(pred[:, t, :], dim=1)
+            for sequence in range(pred.size(1)):
+                predicted_indices = torch.argmax(pred[:, sequence, :], dim=1)
                 predicted_words.extend([glove.itos[idx] for idx in predicted_indices])
 
             # Sum the predicted words to get the final transcript
             sum_predicted_transcript = " ".join(predicted_words)
-
-            print(sum_predicted_transcript)
     
     #accuracy = total_correct / total_samples
     return sum_predicted_transcript
-
-# def get_accuracy(outputs,vocab):
-#     decoded = []
-#     glove = torchtext.vocab.GloVe(name='6B', dim=50)
-#     glove_np = glove.vectors.numpy()
-#     glove_vectors = torch.tensor(glove_np)
-#     #out of vocab token
-#     oov_token = '<UNK>'
-#     if oov_token not in vocab:
-#         vocab.append(oov_token)
-#     oov_id = vocab.index(oov_token) 
-
-#     for batch_outputs in outputs:
-#         batch_outputs_flat = batch_outputs.view(-1, batch_outputs.size(-1))
-
-#         # batch_outputs_flat_normalized = F.normalize(batch_outputs_flat, dim=-1)
-#         # glove_vectors_normalized = F.normalize(glove_vectors, dim=-1)
-
-#         #expand glove_vectors for same number of dimentions
-#         #glove_vectors_normalized_expanded = glove_vectors_normalized.unsqueeze(0)
-#         print(f"batch Shape: {batch_outputs_flat.shape}")
-#         print(f"glove Shape: {glove_vectors.shape}")
-
-#         # sim_scores = F.cosine_similarity(batch_outputs_flat_normalized.unsqueeze(1),glove_vectors_normalized_expanded.unsqueeze(0), dim=-1)
-#         # sim_scores = sim_scores.view(batch_outputs.size(0), batch_outputs.size(1), -1)
-#         # best_word_indices = torch.argmax(sim_scores, dim=-1)
-
-#         # best_word_indices[best_word_indices >= len(vocab)] = oov_id
-
-#         # best_word_indices = best_word_indices.view(batch_outputs.size(0), batch_outputs.size(1))
-    
-#         # batch_decoded = [[vocab[i.item()] for i in timestep] for timestep in best_word_indices]
-#         # decoded.append(batch_decoded)
-
-#     return decoded
 
 def WER(decoded_output, transcription):
     sum_percentage = 0
@@ -198,27 +158,24 @@ def train(model, dataloader,train_loader, valid_loader, transcription, batch_siz
             outputs = model(audio)
 
             #calculate accuracy
-            print("here")
-            #sample_accuracy += WER(decoded,transcription)
             outputs = outputs.permute(1, 0, 2)
             loss = criterion(outputs, label, sequence_len, label_len)
             loss.backward()
             torch.cuda.empty_cache()  # Free up GPU memory
             optimizer.step()
 
-
-        print("--- Epoch done ---")
         losses.append(float(loss))
-
         epochs.append(epoch)
         decoded = get_accuracy(model, device, train_loader)
-        sample_accuracy += WER(decoded,transcription)
+        sample_accuracy = WER(decoded, transcription)
         #get accuracy is not working. Incorrect function?
         train_acc.append(sample_accuracy/len(train_loader))
         print("Train_acc %f", train_acc)
         #valid_acc.append(get_accuracy(model, device, valid_loader))
-        # print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
+        #print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
         #       epoch+1, loss, train_acc[-1], valid_acc[-1]))
+        print("Epoch %d; Loss %f; Train Acc %f" % (
+               epoch+1, loss, train_acc[-1],))
         
         if(epoch + 1) % 2 == 0:
             torch.cuda.empty_cache()  # Free up GPU memory
