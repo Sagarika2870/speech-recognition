@@ -83,8 +83,8 @@ def tensor_to_words():
 
 def get_accuracy(model, device, dataloader):
     #model.eval() # set model to evaluation mode
-    total_correct  = 1
-    total_samples = 1
+    total_correct  = 0
+    total_samples = 0
     glove = torchtext.vocab.GloVe(name='6B', dim=50)
 
     with torch.no_grad():
