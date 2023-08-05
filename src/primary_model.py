@@ -170,7 +170,6 @@ def train(model, dataloader,train_loader, valid_loader, transcription, batch_siz
         sample_accuracy = WER(decoded, transcription)
         #get accuracy is not working. Incorrect function?
         train_acc.append(sample_accuracy/len(train_loader))
-        print("Train_acc %f", train_acc)
         #valid_acc.append(get_accuracy(model, device, valid_loader))
         #print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
         #       epoch+1, loss, train_acc[-1], valid_acc[-1]))
