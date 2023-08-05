@@ -95,14 +95,24 @@ def get_accuracy(model, device, dataloader):
             # Convert predicted embeddings to words for each time step
             predicted_words = []
             for sequence in range(pred.size(1)):
-                predicted_indices = torch.argmax(pred[:, sequence, :], dim=1)
+                sequence_embeddings = pred[:, sequence, :]
+                expand_sequence = sequence_embeddings.unsqueeze(2)
+
+                sim_scores = F.cosine_similarity(expand_sequence,glove.vectors.unsqueeze(0), dim=-1)
+                predicted_indices = torch.argmax(sim_scores, dim=1)
                 predicted_words.extend([glove.itos[idx] for idx in predicted_indices])
 
             # Sum the predicted words to get the final transcript
             sum_predicted_transcript = " ".join(predicted_words)
     
     #accuracy = total_correct / total_samples
-    return sum_predicted_transcript
+            if labels is not None:
+                _, predicted = torch.max(pred,dim=-1)
+                correct = (predicted == labels).sum().item()
+                total_correct += correct
+                total_samples += labels.size(0)
+    accuracy = total_correct / total_samples if total_samples > 0 else 0.0
+    return accuracy
 
 def WER(decoded_output, transcription):
     sum_percentage = 0
@@ -166,13 +176,11 @@ def train(model, dataloader,train_loader, valid_loader, transcription, batch_siz
 
         losses.append(float(loss))
         epochs.append(epoch)
-        train_decoded = get_accuracy(model, device, train_loader)
-        train_sample_accuracy = WER(train_decoded,transcription)
+        train_sample_accuracy = get_accuracy(model, device, train_loader)
         train_acc.append(train_sample_accuracy/len(train_loader))
 
-        valid_decoded = get_accuracy(model, device, valid_loader)
-        valid_sample_accuracy = WER(valid_decoded, transcription)
-        valid_acc.append(valid_sample_accuracy)
+        valid_sample_accuracy= get_accuracy(model, device, valid_loader)
+        valid_acc.append(valid_sample_accuracy/len(valid_loader))
         #valid_acc.append(get_accuracy(model, device, valid_loader))
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
