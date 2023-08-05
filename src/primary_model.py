@@ -172,8 +172,8 @@ def train(model, dataloader,train_loader, valid_loader, transcription, batch_siz
 
         valid_decoded = get_accuracy(model, device, valid_loader)
         valid_sample_accuracy = WER(valid_decoded, transcription)
-        valid_acc.append(valid_sample_accuracy)
-        
+        valid_acc.append(valid_sample_accuracy/len(valid_loader))
+
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
               epoch+1, loss, train_acc[-1], valid_acc[-1]))
         
