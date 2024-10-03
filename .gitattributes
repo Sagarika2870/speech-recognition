@@ -1,0 +1,7 @@
+dataset/treated_recordings filter=lfs diff=lfs merge=lfs -text
+dataset/treated_recordings/** filter=lfs diff=lfs merge=lfs -text
+APS360_Project_Proposal.pdf filter=lfs diff=lfs merge=lfs -text
+BaselineModel.ipynb filter=lfs diff=lfs merge=lfs -text
+dataset/speakers_all.csv filter=lfs diff=lfs merge=lfs -text
+dataset/speakers_all_treated.csv filter=lfs diff=lfs merge=lfs -text
+dataset/speakers_all_treated.xlsx filter=lfs diff=lfs merge=lfs -text
